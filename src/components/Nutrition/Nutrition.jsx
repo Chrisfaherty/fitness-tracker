@@ -9,15 +9,15 @@ import { Food, MealType, LoadingState, NutritionError } from '../../types/nutrit
 
 const Nutrition = () => {
   const { nutrition, addMeal, updateDailyNutrition } = useFitnessStore()
-  const [activeModal, setActiveModal] = useState<'search' | 'manual' | 'barcode' | null>(null)
-  const [selectedMealType, setSelectedMealType] = useState<MealType>('breakfast')
-  const [loadingState, setLoadingState] = useState<LoadingState>({
+  const [activeModal, setActiveModal] = useState(null)
+  const [selectedMealType, setSelectedMealType] = useState('breakfast')
+  const [loadingState, setLoadingState] = useState({
     isLoading: false,
     isSearching: false,
     isAdding: false,
     isDeleting: false
   })
-  const [error, setError] = useState<NutritionError | null>(null)
+  const [error, setError] = useState(null)
 
   const macroTargets = {
     calories: 2000,
@@ -26,7 +26,7 @@ const Nutrition = () => {
     fats: 67
   }
 
-  const mealTypes: { id: MealType; name: string; icon: string }[] = [
+  const mealTypes = [
     { id: 'breakfast', name: 'Breakfast', icon: '🌅' },
     { id: 'lunch', name: 'Lunch', icon: '☀️' },
     { id: 'dinner', name: 'Dinner', icon: '🌙' },
