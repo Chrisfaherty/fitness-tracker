@@ -10,8 +10,8 @@ const Wellness = () => {
   const { wellness, updateWellness, addSleepEntry, setSleepEntries } = useFitnessStore()
   const [newNote, setNewNote] = useState('')
   const [showAddNote, setShowAddNote] = useState(false)
-  const [sleepEntries, setSleepEntriesLocal] = useState<SleepEntry[]>([])
-  const [weeklyStats, setWeeklyStats] = useState<any>(null)
+  const [sleepEntries, setSleepEntriesLocal] = useState([])
+  const [weeklyStats, setWeeklyStats] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
   const moods = [
@@ -73,9 +73,9 @@ const Wellness = () => {
     loadSleepData()
   }, [])
 
-  const handleSleepEntryAdd = async (entry: Omit<SleepEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleSleepEntryAdd = async (entry) => {
     try {
-      const newEntry: SleepEntry = {
+      const newEntry = {
         ...entry,
         id: Date.now().toString(),
         createdAt: new Date().toISOString(),
