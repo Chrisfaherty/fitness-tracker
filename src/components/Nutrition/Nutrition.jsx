@@ -114,7 +114,7 @@ const Nutrition = () => {
     setActiveModal('barcode')
   }
 
-  const handleDeleteMeal = async (mealId: string) => {
+  const handleDeleteMeal = async (mealId) => {
     setLoadingState(prev => ({ ...prev, isDeleting: true }))
     setError(null)
     
@@ -136,7 +136,7 @@ const Nutrition = () => {
 
   const clearError = () => setError(null)
 
-  const MealSection = ({ type, name, icon }: { type: MealType; name: string; icon: string }) => {
+  const MealSection = ({ type, name, icon }) => {
     const meals = getMealsByType(type)
     const totals = getMealTotals(type)
 
