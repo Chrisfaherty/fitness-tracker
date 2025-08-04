@@ -33,11 +33,11 @@ const Nutrition = () => {
     { id: 'snacks', name: 'Snacks', icon: '🍎' }
   ]
 
-  const getMealsByType = (type: MealType) => {
+  const getMealsByType = (type) => {
     return nutrition.meals.filter(meal => meal.mealType === type)
   }
 
-  const getMealTotals = (type: MealType) => {
+  const getMealTotals = (type) => {
     const meals = getMealsByType(type)
     return meals.reduce(
       (totals, meal) => ({
@@ -50,7 +50,7 @@ const Nutrition = () => {
     )
   }
 
-  const handleFoodSelect = async (food: Food) => {
+  const handleFoodSelect = async (food) => {
     setLoadingState(prev => ({ ...prev, isAdding: true }))
     setError(null)
     
@@ -80,7 +80,7 @@ const Nutrition = () => {
     }
   }
 
-  const handleManualEntry = async (entry: any) => {
+  const handleManualEntry = async (entry) => {
     setLoadingState(prev => ({ ...prev, isAdding: true }))
     setError(null)
     
