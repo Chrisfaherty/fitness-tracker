@@ -80,7 +80,7 @@ const Wellness = () => {
         id: Date.now().toString(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        sleepScore: calculateSleepScore(entry as SleepEntry, sleepEntries)
+        sleepScore: calculateSleepScore(entry, sleepEntries)
       }
 
       // Save to storage first
