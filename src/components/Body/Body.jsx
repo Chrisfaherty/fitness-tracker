@@ -248,7 +248,6 @@ const Body = () => {
             </div>
           </div>
         )}
-      )}
 
         {/* Progress Photos Tab */}
         {activeTab === 'photos' && (
