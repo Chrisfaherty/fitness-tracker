@@ -166,6 +166,63 @@ const useFitnessStore = create(
         })
       },
       
+      updateMeal: (mealId, updatedMeal) => {
+        const currentUser = authService.getCurrentUser()
+        if (!currentUser) {
+          console.warn('⚠️ Cannot update meal: No user logged in')
+          return
+        }
+        
+        console.log('✏️ Updating meal:', mealId, 'for user:', currentUser.email, 'New data:', updatedMeal)
+        
+        set((state) => {
+          const userData = state.data[currentUser.id] || {}
+          const currentNutrition = userData.nutrition || state.nutrition
+          
+          // Find the original meal to calculate nutrition difference
+          const originalMeal = currentNutrition.meals.find(meal => meal.id === mealId)
+          
+          if (!originalMeal) {
+            console.warn('⚠️ Meal not found:', mealId)
+            return state
+          }
+          
+          // Calculate the difference in nutrition values
+          const caloriesDiff = (updatedMeal.calories || 0) - (originalMeal.calories || 0)
+          const proteinDiff = (updatedMeal.protein || 0) - (originalMeal.protein || 0)
+          const carbsDiff = (updatedMeal.carbs || 0) - (originalMeal.carbs || 0)
+          const fatsDiff = (updatedMeal.fats || 0) - (originalMeal.fats || 0)
+          
+          // Update the meal in the array
+          const updatedMeals = currentNutrition.meals.map(meal => 
+            meal.id === mealId 
+              ? { ...meal, ...updatedMeal, id: mealId, userId: currentUser.id, updatedAt: new Date().toISOString() }
+              : meal
+          )
+          
+          const newState = {
+            data: {
+              ...state.data,
+              [currentUser.id]: {
+                ...userData,
+                nutrition: {
+                  ...currentNutrition,
+                  meals: updatedMeals,
+                  // Update daily totals with the difference
+                  dailyCalories: Math.max(0, currentNutrition.dailyCalories + caloriesDiff),
+                  dailyProtein: Math.max(0, currentNutrition.dailyProtein + proteinDiff),
+                  dailyCarbs: Math.max(0, currentNutrition.dailyCarbs + carbsDiff),
+                  dailyFats: Math.max(0, currentNutrition.dailyFats + fatsDiff)
+                }
+              }
+            }
+          }
+          
+          console.log('✅ Meal updated. Nutrition differences:', { caloriesDiff, proteinDiff, carbsDiff, fatsDiff })
+          return newState
+        })
+      },
+
       deleteMeal: (mealId) => {
         const currentUser = authService.getCurrentUser()
         if (!currentUser) {

@@ -3,16 +3,18 @@ import { Plus, Camera, Search, Edit3, Trash2, Utensils, X } from 'lucide-react'
 import useFitnessStore from '../../store/fitnessStore'
 import FoodSearch from './FoodSearch'
 import MacroEntry from './MacroEntry.jsx'
+import EditMealModal from './EditMealModal'
 import ProgressBar from './ProgressBar'
 import BarcodeScanner from './BarcodeScanner'
 import authService from '../../services/auth/authService'
 // Types are now handled inline as JavaScript objects
 
 const Nutrition = () => {
-  const { getCurrentUserNutrition, addMeal, updateDailyNutrition, deleteMeal, initializeUser } = useFitnessStore()
+  const { getCurrentUserNutrition, addMeal, updateDailyNutrition, updateMeal, deleteMeal, initializeUser } = useFitnessStore()
   const nutrition = getCurrentUserNutrition()
   const [activeModal, setActiveModal] = useState(null)
   const [selectedMealType, setSelectedMealType] = useState('breakfast')
+  const [editingMeal, setEditingMeal] = useState(null)
   const [loadingState, setLoadingState] = useState({
     isLoading: false,
     isSearching: false,
@@ -153,6 +155,17 @@ const Nutrition = () => {
     }
   }
 
+  const handleEditMeal = (meal) => {
+    console.log('✏️ Opening edit modal for meal:', meal.name)
+    setEditingMeal(meal)
+  }
+
+  const handleUpdateMeal = (mealId, updatedMealData) => {
+    console.log('💾 Updating meal:', mealId, 'with data:', updatedMealData)
+    updateMeal(mealId, updatedMealData)
+    setEditingMeal(null)
+  }
+
   const clearError = () => setError(null)
 
   const MealSection = ({ type, name, icon }) => {
@@ -216,7 +229,8 @@ const Nutrition = () => {
                   
                   <div className="flex gap-2 ml-4">
                     <button
-                      className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-600 rounded-xl transition-all duration-200"
+                      onClick={() => handleEditMeal(meal)}
+                      className="p-2 text-slate-400 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all duration-200"
                       title="Edit meal"
                     >
                       <Edit3 size={16} />
@@ -418,6 +432,13 @@ const Nutrition = () => {
         onClose={() => setActiveModal(null)}
         onFoodScanned={handleFoodSelect}
         onManualEntry={() => setActiveModal('manual')}
+      />
+      
+      <EditMealModal
+        meal={editingMeal}
+        isOpen={!!editingMeal}
+        onClose={() => setEditingMeal(null)}
+        onUpdate={handleUpdateMeal}
       />
     </div>
   )
