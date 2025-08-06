@@ -9,7 +9,7 @@ import authService from '../../services/auth/authService'
 // Types are now handled inline as JavaScript objects
 
 const Nutrition = () => {
-  const { getCurrentUserNutrition, addMeal, updateDailyNutrition, initializeUser } = useFitnessStore()
+  const { getCurrentUserNutrition, addMeal, updateDailyNutrition, deleteMeal, initializeUser } = useFitnessStore()
   const nutrition = getCurrentUserNutrition()
   const [activeModal, setActiveModal] = useState(null)
   const [selectedMealType, setSelectedMealType] = useState('breakfast')
@@ -125,17 +125,25 @@ const Nutrition = () => {
     setActiveModal('barcode')
   }
 
-  const handleDeleteMeal = async (mealId) => {
+  const handleDeleteMeal = async (mealId, mealName) => {
+    // Add confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${mealName}"?\n\nThis action cannot be undone and will remove this food item from your daily nutrition totals.`
+    )
+    
+    if (!confirmed) {
+      return
+    }
+
     setLoadingState(prev => ({ ...prev, isDeleting: true }))
     setError(null)
     
     try {
-      // Implementation would depend on your store structure
-      // For now, we'll show a message
-      console.log('Delete meal:', mealId)
-      alert('Delete functionality would be implemented here')
+      console.log('🗑️ Deleting meal:', mealId, mealName)
+      deleteMeal(mealId)
+      console.log('✅ Meal deleted successfully')
     } catch (err) {
-      console.error('Error deleting meal:', err)
+      console.error('❌ Error deleting meal:', err)
       setError({
         message: 'Failed to delete meal. Please try again.',
         code: 'DELETE_MEAL_ERROR'
@@ -214,12 +222,16 @@ const Nutrition = () => {
                       <Edit3 size={16} />
                     </button>
                     <button
-                      onClick={() => handleDeleteMeal(meal.id)}
-                      className="p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all duration-200"
-                      title="Delete meal"
+                      onClick={() => handleDeleteMeal(meal.id, meal.name)}
+                      className="p-2 text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={loadingState.isDeleting ? "Deleting..." : "Delete meal"}
                       disabled={loadingState.isDeleting}
                     >
-                      <Trash2 size={16} />
+                      {loadingState.isDeleting ? (
+                        <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Trash2 size={16} />
+                      )}
                     </button>
                   </div>
                 </div>

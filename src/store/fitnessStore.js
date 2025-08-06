@@ -166,6 +166,53 @@ const useFitnessStore = create(
         })
       },
       
+      deleteMeal: (mealId) => {
+        const currentUser = authService.getCurrentUser()
+        if (!currentUser) {
+          console.warn('⚠️ Cannot delete meal: No user logged in')
+          return
+        }
+        
+        console.log('🗑️ Deleting meal:', mealId, 'for user:', currentUser.email)
+        
+        set((state) => {
+          const userData = state.data[currentUser.id] || {}
+          const currentNutrition = userData.nutrition || state.nutrition
+          
+          // Find the meal to delete (to subtract its nutrition values)
+          const mealToDelete = currentNutrition.meals.find(meal => meal.id === mealId)
+          
+          if (!mealToDelete) {
+            console.warn('⚠️ Meal not found:', mealId)
+            return state
+          }
+          
+          // Filter out the meal to delete
+          const updatedMeals = currentNutrition.meals.filter(meal => meal.id !== mealId)
+          
+          const newState = {
+            data: {
+              ...state.data,
+              [currentUser.id]: {
+                ...userData,
+                nutrition: {
+                  ...currentNutrition,
+                  meals: updatedMeals,
+                  // Subtract the deleted meal's nutrition from daily totals
+                  dailyCalories: Math.max(0, currentNutrition.dailyCalories - (mealToDelete.calories || 0)),
+                  dailyProtein: Math.max(0, currentNutrition.dailyProtein - (mealToDelete.protein || 0)),
+                  dailyCarbs: Math.max(0, currentNutrition.dailyCarbs - (mealToDelete.carbs || 0)),
+                  dailyFats: Math.max(0, currentNutrition.dailyFats - (mealToDelete.fats || 0))
+                }
+              }
+            }
+          }
+          
+          console.log('✅ Meal deleted. Remaining meals:', newState.data[currentUser.id].nutrition.meals.length)
+          return newState
+        })
+      },
+
       updateDailyNutrition: (nutrition) => {
         const currentUser = authService.getCurrentUser()
         if (!currentUser) return
