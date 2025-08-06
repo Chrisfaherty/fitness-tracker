@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Camera, Search, Edit3, Trash2, Utensils, X } from 'lucide-react'
 import useFitnessStore from '../../store/fitnessStore'
 import FoodSearch from './FoodSearch'
-import MacroEntry from './MacroEntry'
+import MacroEntry from './MacroEntry.jsx'
 import ProgressBar from './ProgressBar'
 import BarcodeScanner from './BarcodeScanner'
 // Types are now handled inline as JavaScript objects
