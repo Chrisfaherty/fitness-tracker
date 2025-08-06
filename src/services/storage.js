@@ -3,7 +3,7 @@ import { openDB } from 'idb'
 class StorageService {
   constructor() {
     this.dbName = 'FitnessTrackerDB'
-    this.dbVersion = 3 // Incremented for sleep entries store
+    this.dbVersion = 4 // Incremented for multi-user support
     this.db = null
     this.init()
   }
@@ -69,6 +69,37 @@ class StorageService {
             sleepStore.createIndex('quality', 'quality')
             sleepStore.createIndex('createdAt', 'createdAt')
           }
+
+          // Add stores for multi-user support
+          if (!db.objectStoreNames.contains('users')) {
+            const userStore = db.createObjectStore('users', { keyPath: 'id' })
+            userStore.createIndex('email', 'email', { unique: true })
+            userStore.createIndex('role', 'role')
+            userStore.createIndex('createdAt', 'createdAt')
+          }
+
+          if (!db.objectStoreNames.contains('userSession')) {
+            db.createObjectStore('userSession', { keyPath: 'id' })
+          }
+
+          if (!db.objectStoreNames.contains('workoutPlans')) {
+            const planStore = db.createObjectStore('workoutPlans', { keyPath: 'id' })
+            planStore.createIndex('level', 'level')
+            planStore.createIndex('category', 'category')
+            planStore.createIndex('createdAt', 'createdAt')
+          }
+
+          if (!db.objectStoreNames.contains('foodPlans')) {
+            const foodPlanStore = db.createObjectStore('foodPlans', { keyPath: 'id' })
+            foodPlanStore.createIndex('goal', 'goal')
+            foodPlanStore.createIndex('createdAt', 'createdAt')
+          }
+
+          if (!db.objectStoreNames.contains('authLogs')) {
+            const logStore = db.createObjectStore('authLogs', { keyPath: 'id' })
+            logStore.createIndex('event', 'event')
+            logStore.createIndex('timestamp', 'timestamp')
+          }
         },
       })
       console.log('IndexedDB initialized successfully')
@@ -78,13 +109,25 @@ class StorageService {
   }
 
   // Generic CRUD operations
-  async save(storeName, data) {
+  async save(storeName, data, customId = null) {
     if (!this.db) await this.init()
     
     try {
       const tx = this.db.transaction(storeName, 'readwrite')
       const store = tx.objectStore(storeName)
-      await store.put({ ...data, savedAt: new Date().toISOString() })
+      
+      // Prepare data with proper ID and metadata
+      const dataToSave = {
+        ...data,
+        savedAt: new Date().toISOString()
+      }
+      
+      // Use custom ID if provided (for auth service compatibility)
+      if (customId) {
+        dataToSave.id = customId
+      }
+      
+      await store.put(dataToSave)
       return { success: true }
     } catch (error) {
       console.error(`Error saving to ${storeName}:`, error)

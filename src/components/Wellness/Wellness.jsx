@@ -3,7 +3,7 @@ import useFitnessStore from '../../store/fitnessStore'
 import SleepTracker from './SleepTracker'
 import storageService from '../../services/storage'
 import { Moon, Brain, Heart, Plus, TrendingUp } from 'lucide-react'
-import { SleepEntry } from '../../types/sleep'
+// Types are now handled inline as JavaScript objects
 import { calculateSleepScore, calculateWeeklyStatistics, formatSleepDuration } from '../../utils/sleepCalculations'
 
 const Wellness = () => {
@@ -126,76 +126,90 @@ const Wellness = () => {
     }
   }
 
-  const WellnessCard = ({ title, children, icon: Icon }) => (
-    <div className="card">
-      <div className="flex items-center gap-3 mb-4">
-        <Icon size={24} className="text-primary-500" />
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
+  const WellnessCard = ({ title, children, icon: Icon, gradient }) => (
+    <div className="card-elevated animate-scale-in">
+      <div className="flex items-center gap-4 mb-6">
+        <div className={`w-12 h-12 bg-gradient-to-r ${gradient} rounded-2xl flex items-center justify-center shadow-lg`}>
+          <Icon size={24} className="text-white" />
+        </div>
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white">{title}</h3>
       </div>
       {children}
     </div>
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Wellness</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Track your mental health and sleep
+          <h1 className="text-4xl font-bold text-gradient mb-3">Wellness Hub</h1>
+          <p className="text-slate-600 dark:text-slate-400 text-lg">
+            Monitor your mental health, sleep patterns, and overall well-being
           </p>
+          <div className="mt-3 flex items-center space-x-4 text-sm text-slate-500 dark:text-slate-400">
+            <span>📅 {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          </div>
         </div>
         <button
           onClick={() => setShowAddNote(true)}
-          className="btn-primary flex items-center gap-2"
+          className="btn-primary flex items-center gap-2 shadow-lg"
         >
           <Plus size={20} />
-          Add Note
+          <span>Add Wellness Note</span>
         </button>
       </div>
 
       {/* Weekly Sleep Overview */}
       {weeklyStats && (
-        <div className="card bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-blue-800">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-300 flex items-center gap-2">
-              <TrendingUp size={20} />
-              Weekly Sleep Summary
-            </h3>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+        <div className="card-gradient p-8 animate-slide-up">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <TrendingUp size={28} className="text-white" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gradient">
+                  Weekly Sleep Summary
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400">
+                  Your sleep insights for the past 7 days
+                </p>
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl font-bold text-gradient mb-1">
                 {weeklyStats.averageScore}
               </div>
-              <div className="text-sm text-blue-700 dark:text-blue-400">
-                Avg Score
+              <div className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                Sleep Score
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div className="text-center">
-              <div className="font-semibold text-blue-900 dark:text-blue-300">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center p-4 bg-white/60 dark:bg-slate-800/60 rounded-2xl backdrop-blur-sm">
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
                 {formatSleepDuration(weeklyStats.averageDuration)}
               </div>
-              <div className="text-blue-700 dark:text-blue-400">Avg Duration</div>
+              <div className="text-sm font-medium text-slate-600 dark:text-slate-400">Avg Duration</div>
             </div>
-            <div className="text-center">
-              <div className="font-semibold text-blue-900 dark:text-blue-300">
+            <div className="text-center p-4 bg-white/60 dark:bg-slate-800/60 rounded-2xl backdrop-blur-sm">
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
                 {weeklyStats.averageQuality}/5
               </div>
-              <div className="text-blue-700 dark:text-blue-400">Avg Quality</div>
+              <div className="text-sm font-medium text-slate-600 dark:text-slate-400">Avg Quality</div>
             </div>
-            <div className="text-center">
-              <div className="font-semibold text-blue-900 dark:text-blue-300">
+            <div className="text-center p-4 bg-white/60 dark:bg-slate-800/60 rounded-2xl backdrop-blur-sm">
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
                 {weeklyStats.consistency}%
               </div>
-              <div className="text-blue-700 dark:text-blue-400">Consistency</div>
+              <div className="text-sm font-medium text-slate-600 dark:text-slate-400">Consistency</div>
             </div>
-            <div className="text-center">
-              <div className="font-semibold text-blue-900 dark:text-blue-300 capitalize">
+            <div className="text-center p-4 bg-white/60 dark:bg-slate-800/60 rounded-2xl backdrop-blur-sm">
+              <div className="text-2xl font-bold text-slate-900 dark:text-white mb-1 capitalize">
                 {weeklyStats.trend === 'improving' ? '📈' : weeklyStats.trend === 'declining' ? '📉' : '➡️'} {weeklyStats.trend}
               </div>
-              <div className="text-blue-700 dark:text-blue-400">Trend</div>
+              <div className="text-sm font-medium text-slate-600 dark:text-slate-400">Trend</div>
             </div>
           </div>
         </div>
@@ -210,11 +224,11 @@ const Wellness = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Sleep Tracking */}
-        <WellnessCard title="Sleep" icon={Moon}>
-          <div className="space-y-4">
+        <WellnessCard title="Sleep Tracker" icon={Moon} gradient="from-indigo-500 to-purple-600">
+          <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Hours Slept: {wellness.sleepHours}h
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">
+                Hours Slept: <span className="text-2xl font-bold text-gradient">{wellness.sleepHours}h</span>
               </label>
               <input
                 type="range"
@@ -223,9 +237,9 @@ const Wellness = () => {
                 step="0.5"
                 value={wellness.sleepHours}
                 onChange={(e) => handleSleepUpdate(parseFloat(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer slider"
               />
-              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-2">
                 <span>0h</span>
                 <span>6h</span>
                 <span>12h</span>
@@ -233,18 +247,18 @@ const Wellness = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">
                 Sleep Quality
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 {sleepQualities.map((quality) => (
                   <button
                     key={quality.value}
                     onClick={() => handleSleepQualityUpdate(quality.value)}
-                    className={`p-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`p-4 rounded-2xl text-sm font-semibold transition-all duration-200 transform hover:scale-105 ${
                       wellness.sleepQuality === quality.value
-                        ? `${quality.color} text-white`
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        ? `${quality.color} text-white shadow-lg scale-105`
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 shadow-sm'
                     }`}
                   >
                     {quality.label}
@@ -256,25 +270,25 @@ const Wellness = () => {
         </WellnessCard>
 
         {/* Mood Tracking */}
-        <WellnessCard title="Mood" icon={Heart}>
-          <div className="space-y-4">
+        <WellnessCard title="Mood Tracker" icon={Heart} gradient="from-pink-500 to-rose-500">
+          <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">
                 How are you feeling today?
               </label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-4">
                 {moods.map((mood) => (
                   <button
                     key={mood.value}
                     onClick={() => handleMoodUpdate(mood.value)}
-                    className={`p-3 rounded-lg text-center transition-colors ${
+                    className={`group p-4 rounded-2xl text-center transition-all duration-300 transform hover:scale-110 ${
                       wellness.mood === mood.value
-                        ? 'bg-primary-100 border-2 border-primary-500 dark:bg-primary-900/20'
-                        : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border-2 border-transparent'
+                        ? 'bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 border-2 border-indigo-500 shadow-lg scale-110'
+                        : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 border-2 border-transparent shadow-sm'
                     }`}
                   >
-                    <div className="text-2xl mb-1">{mood.emoji}</div>
-                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    <div className="text-3xl mb-2 group-hover:scale-125 transition-transform duration-200">{mood.emoji}</div>
+                    <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                       {mood.label}
                     </div>
                   </button>
@@ -285,11 +299,11 @@ const Wellness = () => {
         </WellnessCard>
 
         {/* Stress Level */}
-        <WellnessCard title="Stress Level" icon={Brain}>
-          <div className="space-y-4">
+        <WellnessCard title="Stress Monitor" icon={Brain} gradient="from-orange-500 to-red-500">
+          <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Stress Level: {wellness.stressLevel}/10
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">
+                Stress Level: <span className="text-2xl font-bold text-gradient">{wellness.stressLevel}/10</span>
               </label>
               <input
                 type="range"
@@ -297,74 +311,130 @@ const Wellness = () => {
                 max="10"
                 value={wellness.stressLevel}
                 onChange={(e) => handleStressUpdate(parseInt(e.target.value))}
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                className="w-full h-3 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer slider"
               />
-              <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mt-2">
                 <span>Low</span>
                 <span>Medium</span>
                 <span>High</span>
               </div>
             </div>
             
-            <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {wellness.stressLevel <= 3 && "You're feeling calm and relaxed. Great job managing stress!"}
-                {wellness.stressLevel > 3 && wellness.stressLevel <= 6 && "Moderate stress levels. Consider some relaxation techniques."}
-                {wellness.stressLevel > 6 && wellness.stressLevel <= 8 && "High stress detected. Try deep breathing or meditation."}
-                {wellness.stressLevel > 8 && "Very high stress. Consider talking to someone or taking a break."}
-              </p>
+            <div className={`p-4 rounded-2xl backdrop-blur-sm ${
+              wellness.stressLevel <= 3 ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800' :
+              wellness.stressLevel <= 6 ? 'bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-800' :
+              wellness.stressLevel <= 8 ? 'bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 border border-orange-200 dark:border-orange-800' :
+              'bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-800'
+            }`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  wellness.stressLevel <= 3 ? 'bg-green-500' :
+                  wellness.stressLevel <= 6 ? 'bg-yellow-500' :
+                  wellness.stressLevel <= 8 ? 'bg-orange-500' :
+                  'bg-red-500'
+                }`}>
+                  <span className="text-white text-lg">
+                    {wellness.stressLevel <= 3 ? '😌' : wellness.stressLevel <= 6 ? '😐' : wellness.stressLevel <= 8 ? '😩' : '😰'}
+                  </span>
+                </div>
+                <p className={`text-sm font-medium ${
+                  wellness.stressLevel <= 3 ? 'text-green-700 dark:text-green-400' :
+                  wellness.stressLevel <= 6 ? 'text-yellow-700 dark:text-yellow-400' :
+                  wellness.stressLevel <= 8 ? 'text-orange-700 dark:text-orange-400' :
+                  'text-red-700 dark:text-red-400'
+                }`}>
+                  {wellness.stressLevel <= 3 && "You're feeling calm and relaxed. Great job managing stress!"}
+                  {wellness.stressLevel > 3 && wellness.stressLevel <= 6 && "Moderate stress levels. Consider some relaxation techniques."}
+                  {wellness.stressLevel > 6 && wellness.stressLevel <= 8 && "High stress detected. Try deep breathing or meditation."}
+                  {wellness.stressLevel > 8 && "Very high stress. Consider talking to someone or taking a break."}
+                </p>
+              </div>
             </div>
           </div>
         </WellnessCard>
 
         {/* Notes */}
-        <div className="card lg:col-span-1">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Wellness Notes
-          </h3>
+        <div className="card-elevated lg:col-span-1 animate-slide-up" style={{ animationDelay: '0.3s' }}>
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white text-xl">📝</span>
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+              Wellness Journal
+            </h3>
+          </div>
           {wellness.notes.length > 0 ? (
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {wellness.notes.slice().reverse().map((note) => (
-                <div key={note.id} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <p className="text-sm text-gray-900 dark:text-white mb-1">
-                    {note.content}
+            <div className="space-y-4 max-h-80 overflow-y-auto custom-scrollbar">
+              {wellness.notes.slice().reverse().map((note, index) => (
+                <div key={note.id} className="p-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-700 dark:to-slate-600 rounded-2xl shadow-sm border border-slate-200/50 dark:border-slate-600/50 hover:shadow-md transition-all duration-200">
+                  <p className="text-sm text-slate-900 dark:text-white mb-3 leading-relaxed">
+                    “{note.content}”
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(note.timestamp).toLocaleDateString()} at{' '}
-                    {new Date(note.timestamp).toLocaleTimeString([], { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
-                  </p>
+                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <span className="badge badge-info">
+                      {new Date(note.timestamp).toLocaleDateString()}
+                    </span>
+                    <span className="badge badge-success">
+                      {new Date(note.timestamp).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-              No notes yet. Add your first wellness note!
-            </p>
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                <span className="text-slate-400 text-2xl">📝</span>
+              </div>
+              <p className="text-slate-500 dark:text-slate-400 text-lg font-medium mb-2">
+                No wellness notes yet
+              </p>
+              <p className="text-slate-400 text-sm mb-4">
+                Start journaling your thoughts and feelings!
+              </p>
+              <button
+                onClick={() => setShowAddNote(true)}
+                className="btn-secondary inline-flex items-center gap-2"
+              >
+                <Plus size={16} />
+                Add your first note
+              </button>
+            </div>
           )}
         </div>
       </div>
 
       {/* Add Note Modal */}
       {showAddNote && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Add Wellness Note
-            </h3>
-            <form onSubmit={handleAddNote} className="space-y-4">
+        <div className="modal-overlay animate-fade-in">
+          <div className="modal-content w-full max-w-md animate-scale-in">
+            <div className="flex items-center space-x-4 p-6 border-b border-slate-200/50 dark:border-slate-700/50">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <Plus size={22} className="text-white" />
+              </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <h3 className="text-2xl font-bold text-gradient">
+                  Add Wellness Note
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  Reflect on your feelings and thoughts
+                </p>
+              </div>
+            </div>
+            <form onSubmit={handleAddNote} className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
                   How are you feeling? What's on your mind?
                 </label>
                 <textarea
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
-                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  rows="4"
-                  placeholder="Reflect on your day, thoughts, or feelings..."
+                  className="input-modern"
+                  rows="5"
+                  placeholder="Take a moment to reflect on your day, thoughts, feelings, or any insights you'd like to remember..."
                   required
                 />
               </div>
@@ -376,15 +446,16 @@ const Wellness = () => {
                     setShowAddNote(false)
                     setNewNote('')
                   }}
-                  className="flex-1 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  className="flex-1 btn-secondary py-3"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 btn-primary"
+                  className="flex-1 btn-primary py-3 flex items-center justify-center gap-2"
                 >
-                  Save Note
+                  <span className="text-lg">📝</span>
+                  <span>Save Note</span>
                 </button>
               </div>
             </form>
