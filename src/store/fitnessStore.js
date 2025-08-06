@@ -258,6 +258,43 @@ const useFitnessStore = create(
         }
       })),
       
+      // Getters for current user data
+      getCurrentUserNutrition: () => {
+        const currentUser = authService.getCurrentUser()
+        const state = get()
+        if (!currentUser) return state.nutrition
+        
+        const userData = state.data[currentUser.id]
+        return userData?.nutrition || state.nutrition
+      },
+      
+      getCurrentUserActivity: () => {
+        const currentUser = authService.getCurrentUser()
+        const state = get()
+        if (!currentUser) return state.activity
+        
+        const userData = state.data[currentUser.id]
+        return userData?.activity || state.activity
+      },
+      
+      getCurrentUserWellness: () => {
+        const currentUser = authService.getCurrentUser()
+        const state = get()
+        if (!currentUser) return state.wellness
+        
+        const userData = state.data[currentUser.id]
+        return userData?.wellness || state.wellness
+      },
+      
+      getCurrentUserBody: () => {
+        const currentUser = authService.getCurrentUser()
+        const state = get()
+        if (!currentUser) return state.body
+        
+        const userData = state.data[currentUser.id]
+        return userData?.body || state.body
+      },
+
       resetDailyData: () => set((state) => ({
         nutrition: {
           ...state.nutrition,

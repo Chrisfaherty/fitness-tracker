@@ -5,10 +5,12 @@ import FoodSearch from './FoodSearch'
 import MacroEntry from './MacroEntry.jsx'
 import ProgressBar from './ProgressBar'
 import BarcodeScanner from './BarcodeScanner'
+import authService from '../../services/auth/authService'
 // Types are now handled inline as JavaScript objects
 
 const Nutrition = () => {
-  const { nutrition, addMeal, updateDailyNutrition } = useFitnessStore()
+  const { getCurrentUserNutrition, addMeal, updateDailyNutrition, initializeUser } = useFitnessStore()
+  const nutrition = getCurrentUserNutrition()
   const [activeModal, setActiveModal] = useState(null)
   const [selectedMealType, setSelectedMealType] = useState('breakfast')
   const [loadingState, setLoadingState] = useState({
@@ -18,6 +20,15 @@ const Nutrition = () => {
     isDeleting: false
   })
   const [error, setError] = useState(null)
+
+  // Initialize user data when component mounts
+  useEffect(() => {
+    const currentUser = authService.getCurrentUser()
+    if (currentUser) {
+      console.log('🔧 Initializing nutrition data for user:', currentUser.id)
+      initializeUser(currentUser.id)
+    }
+  }, [initializeUser])
 
   const macroTargets = {
     calories: 2000,
