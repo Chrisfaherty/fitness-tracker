@@ -378,7 +378,7 @@ export class AuthService {
   // Private helper methods
   async authenticateUser(email, password) {
     // Simulate database lookup
-    const users = await this.getAllUsers()
+    const users = await this.getAllUsersInternal()
     const user = users.find(u => u.email.toLowerCase() === email.toLowerCase())
     
     if (!user) {
@@ -401,7 +401,7 @@ export class AuthService {
     return user
   }
 
-  async getAllUsers() {
+  async getAllUsersInternal() {
     try {
       const users = await storageService.getAll('users') || []
       
@@ -447,8 +447,31 @@ export class AuthService {
   }
 
   async getUserByEmail(email) {
-    const users = await this.getAllUsers()
-    return users.find(u => u.email.toLowerCase() === email.toLowerCase())
+    try {
+      const users = await this.getAllUsersInternal()
+      return users.find(u => u.email.toLowerCase() === email.toLowerCase())
+    } catch (error) {
+      console.error('❌ Error getting user by email:', error)
+      return null
+    }
+  }
+
+  /**
+   * Get all users (admin only)
+   */
+  async getAllUsers() {
+    if (!this.isAdmin()) {
+      throw new Error('Access denied: Admin privileges required')
+    }
+
+    try {
+      const users = await storageService.getAll('users') || []
+      console.log('✅ Retrieved all users:', users.length)
+      return users
+    } catch (error) {
+      console.error('❌ Error getting all users:', error)
+      throw error
+    }
   }
 
   async saveUser(user) {

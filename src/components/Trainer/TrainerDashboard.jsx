@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Users, Activity, Calendar, Settings, LogOut, Plus, Search, Filter } from 'lucide-react'
 import authService from '../../services/auth/authService'
+import storageService from '../../services/storage'
 import ClientManagement from './ClientManagement'
 import WorkoutPlanManager from './WorkoutPlanManager'
 import FoodPlanManager from './FoodPlanManager'
@@ -64,13 +65,23 @@ const TrainerDashboard = ({ onLogout }) => {
   }
 
   const getWorkoutPlansCount = async () => {
-    // This would connect to workout plan service when implemented
-    return 5 // Mock count for trainer
+    try {
+      const workoutPlans = await storageService.getAll('workoutPlans') || []
+      return workoutPlans.length
+    } catch (error) {
+      console.error('Error getting workout plans count:', error)
+      return 0
+    }
   }
 
   const getFoodPlansCount = async () => {
-    // This would connect to food plan service when implemented
-    return 3 // Mock count for trainer
+    try {
+      const foodPlans = await storageService.getAll('foodPlans') || []
+      return foodPlans.length
+    } catch (error) {
+      console.error('Error getting food plans count:', error)
+      return 0
+    }
   }
 
   if (!authService.isTrainer()) {
