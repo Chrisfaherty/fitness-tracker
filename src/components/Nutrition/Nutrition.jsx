@@ -76,9 +76,20 @@ const Nutrition = () => {
         fats: food.fats,
         mealType: selectedMealType,
         servingSize: food.serving_size,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        // Enhanced USDA data
+        ...(food.source && { source: food.source }),
+        ...(food.fdcId && { fdcId: food.fdcId }),
+        ...(food.dataType && { dataType: food.dataType }),
+        ...(food.isAccurate && { isAccurate: food.isAccurate }),
+        ...(food.sourceUrl && { sourceUrl: food.sourceUrl }),
+        // Additional nutrition data
+        ...(food.fiber && { fiber: food.fiber }),
+        ...(food.sugar && { sugar: food.sugar }),
+        ...(food.sodium && { sodium: food.sodium })
       }
       
+      console.log('🍽️ Adding meal with enhanced data:', meal)
       addMeal(meal)
       updateDailyNutrition(meal)
       setActiveModal(null)

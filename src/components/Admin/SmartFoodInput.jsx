@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Trash2, Calculator, ChevronDown, Search } from 'lucide-react'
+import usdaFoodDataService from '../../services/usdaFoodDataService.js'
 
 const SmartFoodInput = ({ 
   food, 
@@ -14,8 +15,12 @@ const SmartFoodInput = ({
   const [filteredFoods, setFilteredFoods] = useState([])
   const inputRef = useRef(null)
 
-  // Comprehensive food database with brands (per 100g)
-  const foodDatabase = {
+  // State for async food suggestions
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
+  const [foodSuggestions, setFoodSuggestions] = useState([])
+  
+  // Enhanced food database with USDA verified foods (per 100g)
+  const localFoodDatabase = {
     // === PROTEINS ===
     'Chicken Breast': { calories: 165, protein: 31, carbs: 0, fats: 3.6 },
     'Chicken Thigh': { calories: 209, protein: 26, carbs: 0, fats: 11 },
@@ -190,35 +195,101 @@ const SmartFoodInput = ({
     'Balsamic Vinegar': { calories: 88, protein: 0.5, carbs: 17, fats: 0 },
     'Hot Sauce (Tabasco)': { calories: 12, protein: 1.3, carbs: 0.8, fats: 0.8 },
     'Sriracha': { calories: 93, protein: 2, carbs: 18, fats: 1 },
-    'Soy Sauce': { calories: 60, protein: 9, carbs: 6, fats: 0 }
+    'Soy Sauce': { calories: 60, protein: 9, carbs: 6, fats: 0 },
+    
+    // Enhanced with USDA verified items
+    ...usdaFoodDataService.getVerifiedFoodDatabase().reduce((acc, food) => {
+      acc[food.name] = {
+        calories: food.calories,
+        protein: food.protein,
+        carbs: food.carbs,
+        fats: food.fats,
+        fiber: food.fiber,
+        sugar: food.sugar,
+        sodium: food.sodium
+      }
+      return acc
+    }, {})
   }
 
-  // Filter foods based on search term
+  // Enhanced food search with USDA integration
   useEffect(() => {
-    if (!food.name || food.name.length < 1) {
-      setFilteredFoods([])
-      setShowSuggestions(false)
-      return
+    const searchFoods = async () => {
+      if (!food.name || food.name.length < 2) {
+        setFilteredFoods([])
+        setFoodSuggestions([])
+        setShowSuggestions(false)
+        return
+      }
+
+      const searchTerm = food.name.toLowerCase()
+      
+      // Get local database matches first
+      const localMatches = Object.keys(localFoodDatabase).filter(foodName =>
+        foodName.toLowerCase().includes(searchTerm)
+      ).slice(0, 4)
+      
+      // Get USDA suggestions if search term is long enough
+      let usdaSuggestions = []
+      if (food.name.length >= 3) {
+        setIsLoadingSuggestions(true)
+        try {
+          const usdaResults = await usdaFoodDataService.searchFoods(food.name, 6)
+          usdaSuggestions = usdaResults.map(usdaFood => ({
+            name: usdaFood.name,
+            source: 'usda',
+            fdcId: usdaFood.fdcId,
+            data: {
+              calories: usdaFood.calories,
+              protein: usdaFood.protein,
+              carbs: usdaFood.carbs,
+              fats: usdaFood.fats,
+              fiber: usdaFood.fiber,
+              sugar: usdaFood.sugar,
+              sodium: usdaFood.sodium
+            },
+            isAccurate: usdaFood.isAccurate
+          }))
+        } catch (error) {
+          console.warn('USDA search failed:', error)
+        } finally {
+          setIsLoadingSuggestions(false)
+        }
+      }
+      
+      setFilteredFoods(localMatches)
+      setFoodSuggestions(usdaSuggestions)
+      setShowSuggestions((localMatches.length > 0 || usdaSuggestions.length > 0) && food.name !== '')
     }
 
-    const searchTerm = food.name.toLowerCase()
-    const matches = Object.keys(foodDatabase).filter(foodName =>
-      foodName.toLowerCase().includes(searchTerm)
-    ).slice(0, 8) // Limit to 8 suggestions
-
-    setFilteredFoods(matches)
-    setShowSuggestions(matches.length > 0 && food.name !== '')
+    const debounceTimer = setTimeout(searchFoods, 300)
+    return () => clearTimeout(debounceTimer)
   }, [food.name])
 
-  // Handle food selection from dropdown
-  const selectFood = (selectedFoodName) => {
+  // Handle food selection from dropdown (local database)
+  const selectLocalFood = (selectedFoodName) => {
     onFoodChange(mealIndex, foodIndex, 'name', selectedFoodName)
-    onFoodChange(mealIndex, foodIndex, 'selectedFood', foodDatabase[selectedFoodName])
+    onFoodChange(mealIndex, foodIndex, 'selectedFood', localFoodDatabase[selectedFoodName])
+    onFoodChange(mealIndex, foodIndex, 'source', 'local')
     setShowSuggestions(false)
     
     // Auto-calculate if amount is already entered
     if (food.amount) {
-      calculateMacros(foodDatabase[selectedFoodName], food.amount)
+      calculateMacros(localFoodDatabase[selectedFoodName], food.amount)
+    }
+  }
+  
+  // Handle USDA food selection
+  const selectUSDAFood = (usdaFood) => {
+    onFoodChange(mealIndex, foodIndex, 'name', usdaFood.name)
+    onFoodChange(mealIndex, foodIndex, 'selectedFood', usdaFood.data)
+    onFoodChange(mealIndex, foodIndex, 'source', 'usda')
+    onFoodChange(mealIndex, foodIndex, 'fdcId', usdaFood.fdcId)
+    setShowSuggestions(false)
+    
+    // Auto-calculate if amount is already entered
+    if (food.amount) {
+      calculateMacros(usdaFood.data, food.amount)
     }
   }
 
@@ -329,27 +400,78 @@ const SmartFoodInput = ({
             </div>
           </div>
 
-          {/* Dropdown Suggestions */}
-          {showSuggestions && filteredFoods.length > 0 && (
-            <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-              {filteredFoods.map((foodName, index) => {
-                const nutrition = foodDatabase[foodName]
-                return (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => selectFood(foodName)}
-                    className="w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
-                  >
-                    <div className="font-medium text-gray-900 dark:text-white text-sm">
-                      {foodName}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {nutrition.calories} cal, {nutrition.protein}g protein per 100g
-                    </div>
-                  </button>
-                )
-              })}
+          {/* Enhanced Dropdown Suggestions */}
+          {showSuggestions && (filteredFoods.length > 0 || foodSuggestions.length > 0 || isLoadingSuggestions) && (
+            <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+              {/* Local Database Results */}
+              {filteredFoods.length > 0 && (
+                <>
+                  <div className="px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-750">
+                    📊 Quick Database
+                  </div>
+                  {filteredFoods.map((foodName, index) => {
+                    const nutrition = localFoodDatabase[foodName]
+                    return (
+                      <button
+                        key={`local-${index}`}
+                        type="button"
+                        onClick={() => selectLocalFood(foodName)}
+                        className="w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700"
+                      >
+                        <div className="font-medium text-gray-900 dark:text-white text-sm">
+                          {foodName}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {nutrition.calories} cal, {nutrition.protein}g protein per 100g
+                        </div>
+                      </button>
+                    )
+                  })}
+                </>
+              )}
+              
+              {/* Loading State */}
+              {isLoadingSuggestions && (
+                <div className="px-3 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
+                  🔍 Searching USDA database...
+                </div>
+              )}
+              
+              {/* USDA Results */}
+              {foodSuggestions.length > 0 && (
+                <>
+                  <div className="px-3 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20">
+                    🏛️ USDA FoodData Central {foodSuggestions.some(f => f.isAccurate) && '(High Accuracy)'}
+                  </div>
+                  {foodSuggestions.map((usdaFood, index) => (
+                    <button
+                      key={`usda-${index}`}
+                      type="button"
+                      onClick={() => selectUSDAFood(usdaFood)}
+                      className="w-full px-3 py-2 text-left hover:bg-blue-50 dark:hover:bg-blue-900/20 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                    >
+                      <div className="font-medium text-gray-900 dark:text-white text-sm flex items-center">
+                        {usdaFood.name}
+                        {usdaFood.isAccurate && (
+                          <span className="ml-2 px-1 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded">
+                            Verified
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {usdaFood.data.calories} cal, {usdaFood.data.protein}g protein per 100g
+                      </div>
+                    </button>
+                  ))}
+                </>
+              )}
+              
+              {/* No Results */}
+              {!isLoadingSuggestions && filteredFoods.length === 0 && foodSuggestions.length === 0 && (
+                <div className="px-3 py-3 text-center text-sm text-gray-500 dark:text-gray-400">
+                  No matching foods found. Type to search or enter manually.
+                </div>
+              )}
             </div>
           )}
 
@@ -456,10 +578,19 @@ const SmartFoodInput = ({
         </div>
       )}
 
-      {/* Selected food indicator */}
+      {/* Enhanced selected food indicator */}
       {food.selectedFood && (
-        <div className="mt-3 text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg">
-          📊 Using database values for: <strong>{food.name}</strong>
+        <div className={`mt-3 text-xs p-2 rounded-lg ${
+          food.source === 'usda' 
+            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+            : 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20'
+        }`}>
+          {food.source === 'usda' ? '🏛️' : '📊'} Using {food.source === 'usda' ? 'USDA FoodData Central' : 'local database'} values for: <strong>{food.name}</strong>
+          {food.fdcId && (
+            <div className="mt-1 text-xs opacity-70">
+              FDC ID: {food.fdcId}
+            </div>
+          )}
         </div>
       )}
     </div>

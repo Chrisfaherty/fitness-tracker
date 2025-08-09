@@ -32,9 +32,21 @@ const FoodItem = React.memo<{
   >
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div className="flex-1">
-        <h4 className="font-medium text-gray-900 dark:text-white">
-          {food.name}
-        </h4>
+        <div className="flex items-center gap-2">
+          <h4 className="font-medium text-gray-900 dark:text-white">
+            {food.name}
+          </h4>
+          {food.source === 'usda' && food.isAccurate && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+              ✓ Verified
+            </span>
+          )}
+          {food.source === 'usda' && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">
+              USDA
+            </span>
+          )}
+        </div>
         {food.brand && (
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {food.brand}
@@ -42,6 +54,9 @@ const FoodItem = React.memo<{
         )}
         <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
           {food.serving_size}
+          {food.dataType && (
+            <span className="ml-2 text-xs opacity-75">({food.dataType})</span>
+          )}
         </p>
         
         {/* Nutrition Info */}
@@ -53,20 +68,36 @@ const FoodItem = React.memo<{
           <span>{food.protein}g protein</span>
           <span>{food.carbs}g carbs</span>
           <span>{food.fats}g fat</span>
+          {food.fiber && <span>{food.fiber}g fiber</span>}
+          {food.sugar && <span>{food.sugar}g sugar</span>}
+          {food.sodium && <span>{food.sodium}mg sodium</span>}
         </div>
       </div>
       
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          onSelect()
-        }}
-        className="btn-primary flex items-center gap-2 whitespace-nowrap min-h-[44px] shrink-0"
-        aria-label={`Add ${food.name} to meal`}
-      >
-        <Plus size={16} aria-hidden="true" />
-        Add
-      </button>
+      <div className="flex flex-col gap-2 shrink-0">
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onSelect()
+          }}
+          className="btn-primary flex items-center gap-2 whitespace-nowrap min-h-[44px]"
+          aria-label={`Add ${food.name} to meal`}
+        >
+          <Plus size={16} aria-hidden="true" />
+          Add
+        </button>
+        {food.sourceUrl && (
+          <a
+            href={food.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            View Source
+          </a>
+        )}
+      </div>
     </div>
   </div>
 ))
@@ -392,13 +423,28 @@ const FoodSearchOptimized: React.FC<FoodSearchProps> = ({ onFoodSelect, onClose,
           ) : hasSearched ? (
             searchResults.length > 0 ? (
               <div className="space-y-3">
-                <p 
-                  className="text-sm text-gray-600 dark:text-gray-400 mb-4"
-                  role="status"
-                  aria-live="polite"
-                >
-                  Found {searchResults.length} results for "{searchQuery}"
-                </p>
+                <div className="mb-4">
+                  <p 
+                    className="text-sm text-gray-600 dark:text-gray-400"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    Found {searchResults.length} results for "{searchQuery}"
+                  </p>
+                  {/* Show data sources info */}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {searchResults.some(food => food.source === 'usda') && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
+                        🏛️ USDA Verified
+                      </span>
+                    )}
+                    {searchResults.some(food => food.source === 'openfoodfacts') && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
+                        🏪 Branded Items
+                      </span>
+                    )}
+                  </div>
+                </div>
                 {searchResults.map((food, index) => (
                   <FoodItem
                     key={food.id}

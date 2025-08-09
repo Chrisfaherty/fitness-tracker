@@ -32,13 +32,37 @@ class ApiService {
   // Food and nutrition APIs
   async searchFood(query) {
     try {
-      // Use OpenFoodFacts API for real food search
-      const openFoodFacts = await import('./openFoodFacts.js')
-      const results = await openFoodFacts.default.searchProducts(query, 1, 20)
+      // Use USDA Food Data service as primary source
+      const usdaFoodDataService = await import('./usdaFoodDataService.js')
+      const usdaResults = await usdaFoodDataService.default.searchFoods(query, 15)
       
-      // Convert OpenFoodFacts format to our expected format
-      return {
-        foods: results.products.map(product => ({
+      // Convert USDA format to our expected format
+      const usdaFoods = usdaResults.map(food => ({
+        id: `usda_${food.fdcId}`,
+        fdcId: food.fdcId,
+        name: food.name,
+        calories: food.calories,
+        protein: food.protein,
+        carbs: food.carbs,
+        fats: food.fats,
+        fiber: food.fiber,
+        sugar: food.sugar,
+        sodium: food.sodium,
+        serving_size: '100g (USDA)',
+        brand: '',
+        source: 'usda',
+        isAccurate: food.isAccurate,
+        dataType: food.dataType,
+        sourceUrl: food.sourceUrl
+      }))
+      
+      // Try to get additional results from OpenFoodFacts for branded items
+      let openFoodFactsFoods = []
+      try {
+        const openFoodFacts = await import('./openFoodFacts.js')
+        const results = await openFoodFacts.default.searchProducts(query, 1, 10)
+        
+        openFoodFactsFoods = results.products.map(product => ({
           id: product.id,
           name: product.name,
           calories: product.calories,
@@ -51,9 +75,23 @@ class ApiService {
           brand: product.brand,
           source: 'openfoodfacts'
         }))
+      } catch (offError) {
+        console.warn('OpenFoodFacts search failed:', offError)
+      }
+      
+      // Combine results with USDA first (higher quality)
+      const combinedFoods = [...usdaFoods, ...openFoodFactsFoods]
+      
+      return {
+        foods: combinedFoods.length > 0 ? combinedFoods : this.getEnhancedMockFoodData(query).foods,
+        sources: {
+          usda: usdaFoods.length,
+          openfoodfacts: openFoodFactsFoods.length,
+          total: combinedFoods.length
+        }
       }
     } catch (error) {
-      console.warn('OpenFoodFacts search failed, using mock data:', error)
+      console.warn('All food search services failed, using mock data:', error)
       // Fallback to enhanced mock data
       return this.getEnhancedMockFoodData(query)
     }
