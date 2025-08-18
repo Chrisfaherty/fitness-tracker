@@ -15,6 +15,7 @@ export class AuthService {
     this.maxLoginAttempts = 5
     this.lockoutDuration = 15 * 60 * 1000 // 15 minutes
     this.sessionDuration = 8 * 60 * 60 * 1000 // 8 hours
+    this.storageService = storageService // Expose for testing
     
     // Initialize authentication state
     this.initializeAuth()
@@ -371,6 +372,71 @@ export class AuthService {
       
     } catch (error) {
       await this.logAuthEvent('password_reset_failed', { email, error: error.message })
+      throw error
+    }
+  }
+
+  /**
+   * Verify password reset token
+   */
+  async verifyResetToken(email, token) {
+    try {
+      const resetData = await storageService.get(`passwordReset_${email}`)
+      
+      if (!resetData || resetData.token !== token) {
+        throw new Error('Invalid or expired reset token')
+      }
+      
+      if (new Date() > new Date(resetData.expiry)) {
+        // Clean up expired token
+        await storageService.delete(`passwordReset_${email}`)
+        throw new Error('Reset token has expired')
+      }
+      
+      return { success: true, email: resetData.email }
+      
+    } catch (error) {
+      await this.logAuthEvent('password_reset_token_verification_failed', { email, error: error.message })
+      throw error
+    }
+  }
+
+  /**
+   * Complete password reset with new password
+   */
+  async resetPassword(email, token, newPassword) {
+    try {
+      // Verify token first
+      await this.verifyResetToken(email, token)
+      
+      // Get user
+      const user = await this.getUserByEmail(email)
+      if (!user) {
+        throw new Error('User not found')
+      }
+      
+      // Validate new password
+      if (!newPassword || newPassword.length < 8) {
+        throw new Error('New password must be at least 8 characters long')
+      }
+      
+      // Hash new password
+      const hashedPassword = await this.hashPassword(newPassword)
+      
+      // Update user password
+      const updatedUser = { ...user, password: hashedPassword }
+      await this.saveUser(updatedUser)
+      
+      // Clean up reset token
+      await storageService.delete(`passwordReset_${email}`)
+      
+      // Log successful password reset
+      await this.logAuthEvent('password_reset_completed', { email })
+      
+      return { success: true, message: 'Password has been reset successfully' }
+      
+    } catch (error) {
+      await this.logAuthEvent('password_reset_completion_failed', { email, error: error.message })
       throw error
     }
   }

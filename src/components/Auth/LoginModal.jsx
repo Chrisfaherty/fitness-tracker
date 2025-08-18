@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { X, Eye, EyeOff, LogIn, UserPlus, Shield } from 'lucide-react'
 import authService from '../../services/auth/authService'
+import ForgotPasswordModal from './ForgotPasswordModal'
+import ResetPasswordForm from './ResetPasswordForm'
 
 const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const [mode, setMode] = useState('login') // 'login' or 'register'
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [showResetForm, setShowResetForm] = useState(false)
+  const [resetToken, setResetToken] = useState('')
+  const [resetEmail, setResetEmail] = useState('')
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -116,6 +122,29 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
       role: 'client',
       rememberMe: false
     })
+  }
+
+  const handleForgotPassword = () => {
+    setShowForgotPassword(true)
+  }
+
+  const handleBackToLogin = () => {
+    setShowForgotPassword(false)
+    setShowResetForm(false)
+  }
+
+  const handleResetSuccess = (message) => {
+    setShowResetForm(false)
+    setError('')
+    // Show success message and redirect to login
+    alert(message + ' You can now log in with your new password.')
+  }
+
+  const handleShowResetForm = (token, email) => {
+    setResetToken(token)
+    setResetEmail(email)
+    setShowResetForm(true)
+    setShowForgotPassword(false)
   }
 
   if (!isOpen) return null
@@ -281,6 +310,13 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
                   Remember me for 30 days
                 </span>
               </label>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors duration-200"
+              >
+                Forgot Password?
+              </button>
             </div>
           )}
 
@@ -358,6 +394,22 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
           )}
         </form>
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        isOpen={showForgotPassword}
+        onClose={() => setShowForgotPassword(false)}
+        onBackToLogin={handleBackToLogin}
+      />
+
+      {/* Reset Password Form */}
+      <ResetPasswordForm
+        isOpen={showResetForm}
+        onClose={() => setShowResetForm(false)}
+        onSuccess={handleResetSuccess}
+        resetToken={resetToken}
+        email={resetEmail}
+      />
     </div>
   )
 }
