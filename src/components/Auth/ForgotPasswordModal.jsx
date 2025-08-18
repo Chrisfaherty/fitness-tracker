@@ -102,7 +102,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onBackToLogin }) => {
                   </p>
                 </div>
                 <p className="text-xs text-yellow-700 dark:text-yellow-400">
-                  In production, you would receive an email. For now, check the browser console for the reset token.
+                  In production, you would receive an email. For now, check the browser console for the reset token to complete the password reset process.
                 </p>
               </div>
 
