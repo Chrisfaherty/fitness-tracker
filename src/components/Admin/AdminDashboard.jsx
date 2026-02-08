@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Users, Activity, Calendar, Settings, Plus, Search, Filter, LogOut } from 'lucide-react'
+import { Users, Activity, Calendar, Settings, Plus, Search, Filter, LogOut, TestTube } from 'lucide-react'
 import authService from '../../services/auth/authService'
 import storageService from '../../services/storage'
 import ClientManagement from './ClientManagement'
 import WorkoutPlanManager from './WorkoutPlanManager'
 import FoodPlanManager from './FoodPlanManager'
 import AdminSettings from './AdminSettings'
+import PasswordResetTest from '../Auth/PasswordResetTest'
 
 const AdminDashboard = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('clients')
@@ -99,7 +100,8 @@ const AdminDashboard = ({ onLogout }) => {
     { id: 'clients', name: 'Client Management', icon: Users },
     { id: 'workouts', name: 'Workout Plans', icon: Activity },
     { id: 'nutrition', name: 'Food Plans', icon: Calendar },
-    { id: 'settings', name: 'Settings', icon: Settings }
+    { id: 'settings', name: 'Settings', icon: Settings },
+    { id: 'testing', name: 'Testing Tools', icon: TestTube }
   ]
 
   return (
@@ -248,8 +250,8 @@ const AdminDashboard = ({ onLogout }) => {
           {/* Tab Content */}
           <div className="p-8">
             {activeTab === 'clients' && (
-              <ClientManagement 
-                clients={clients} 
+              <ClientManagement
+                clients={clients}
                 onClientsUpdate={loadDashboardData}
               />
             )}
@@ -261,6 +263,9 @@ const AdminDashboard = ({ onLogout }) => {
             )}
             {activeTab === 'settings' && (
               <AdminSettings />
+            )}
+            {activeTab === 'testing' && (
+              <PasswordResetTest />
             )}
           </div>
         </div>

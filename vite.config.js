@@ -54,4 +54,25 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split React and React DOM into separate chunk
+          'react-vendor': ['react', 'react-dom'],
+          // Split React Router into separate chunk
+          'router': ['react-router-dom'],
+          // Split Zustand state management
+          'state': ['zustand'],
+          // Split icon library
+          'icons': ['lucide-react'],
+          // Split heavy barcode scanning libraries
+          'barcode': ['quagga', 'html5-qrcode'],
+          // Split API libraries
+          'api': ['axios', 'idb']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 600
+  }
 })

@@ -153,7 +153,7 @@ const MealSection = React.memo<{
 MealSection.displayName = 'MealSection'
 
 const NutritionOptimized: React.FC = () => {
-  const { nutrition, addMeal, updateDailyNutrition } = useFitnessStore()
+  const { nutrition, addMeal, updateDailyNutrition, deleteMeal } = useFitnessStore()
   const [activeModal, setActiveModal] = useState<'search' | 'manual' | 'barcode' | null>(null)
   const [selectedMealType, setSelectedMealType] = useState<MealType>('breakfast')
   const [loadingState, setLoadingState] = useState<LoadingState>({
@@ -295,13 +295,17 @@ const NutritionOptimized: React.FC = () => {
   const handleDeleteMeal = useCallback(async (mealId: string) => {
     setLoadingState(prev => ({ ...prev, isDeleting: true }))
     setError(null)
-    
+
     try {
-      // TODO: Implement delete functionality in store
-      console.log('Delete meal:', mealId)
-      
+      // Find the meal to get its name for the announcement
+      const mealToDelete = nutrition.meals.find(meal => meal.id === mealId)
+      const mealName = mealToDelete?.name || 'Meal'
+
+      // Delete the meal using the store
+      deleteMeal(mealId)
+
       // Accessibility: Announce success
-      announceToScreenReader('Meal deleted successfully')
+      announceToScreenReader(`${mealName} deleted successfully`)
     } catch (err) {
       console.error('Error deleting meal:', err)
       setError({
@@ -311,7 +315,7 @@ const NutritionOptimized: React.FC = () => {
     } finally {
       setLoadingState(prev => ({ ...prev, isDeleting: false }))
     }
-  }, [])
+  }, [nutrition.meals, deleteMeal])
 
   const handleModalOpen = useCallback((modal: 'search' | 'manual' | 'barcode', mealType?: MealType) => {
     if (mealType) {

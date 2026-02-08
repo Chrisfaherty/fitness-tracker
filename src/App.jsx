@@ -1,18 +1,31 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Layout from './components/common/Layout'
-import Dashboard from './components/Dashboard/Dashboard'
-import Nutrition from './components/Nutrition/Nutrition'
-import Activity from './components/Activity/Activity'
-import Wellness from './components/Wellness/Wellness'
-import Body from './components/Body/Body'
-import CameraTest from './components/common/CameraTest'
-import AdminDashboard from './components/Admin/AdminDashboard'
-import TrainerDashboard from './components/Trainer/TrainerDashboard'
-import LandingPage from './components/Landing/LandingPage'
 import LoginModal from './components/Auth/LoginModal'
 import authService from './services/auth/authService'
 import dataEncryptionService from './services/security/dataEncryptionService'
+
+// Lazy load heavy components for better code splitting
+const Layout = lazy(() => import('./components/common/Layout'))
+const Dashboard = lazy(() => import('./components/Dashboard/Dashboard'))
+const Nutrition = lazy(() => import('./components/Nutrition/NutritionOptimized'))
+const ErrorBoundary = lazy(() => import('./components/ErrorBoundary'))
+const Activity = lazy(() => import('./components/Activity/Activity'))
+const Wellness = lazy(() => import('./components/Wellness/Wellness'))
+const Body = lazy(() => import('./components/Body/Body'))
+const CameraTest = lazy(() => import('./components/common/CameraTest'))
+const AdminDashboard = lazy(() => import('./components/Admin/AdminDashboard'))
+const TrainerDashboard = lazy(() => import('./components/Trainer/TrainerDashboard'))
+const LandingPage = lazy(() => import('./components/Landing/LandingPage'))
+
+// Loading component for suspense fallback
+const LoadingFallback = () => (
+  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+    <div className="flex flex-col items-center gap-3">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      <p className="text-sm text-gray-600 dark:text-gray-400">Loading...</p>
+    </div>
+  </div>
+)
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null)
@@ -67,60 +80,74 @@ function App() {
   // Show admin dashboard if admin is logged in
   if (currentUser && currentUser.role === 'admin') {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <AdminDashboard onLogout={handleLogout} />
-      </div>
+      <Suspense fallback={<LoadingFallback />}>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+          <AdminDashboard onLogout={handleLogout} />
+        </div>
+      </Suspense>
     )
   }
 
   // Show trainer dashboard if trainer is logged in
   if (currentUser && currentUser.role === 'trainer') {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <TrainerDashboard onLogout={handleLogout} />
-      </div>
+      <Suspense fallback={<LoadingFallback />}>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+          <TrainerDashboard onLogout={handleLogout} />
+        </div>
+      </Suspense>
     )
   }
 
   // Show landing page if no user is logged in
   if (!currentUser) {
     return (
-      <div className="min-h-screen">
-        <LandingPage onGetStarted={() => setShowLoginModal(true)} />
-        
-        <LoginModal
-          isOpen={showLoginModal}
-          onClose={() => setShowLoginModal(false)}
-          onLoginSuccess={handleLoginSuccess}
-        />
-      </div>
+      <Suspense fallback={<LoadingFallback />}>
+        <div className="min-h-screen">
+          <LandingPage onGetStarted={() => setShowLoginModal(true)} />
+
+          <LoginModal
+            isOpen={showLoginModal}
+            onClose={() => setShowLoginModal(false)}
+            onLoginSuccess={handleLoginSuccess}
+          />
+        </div>
+      </Suspense>
     )
   }
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Layout 
-          currentUser={currentUser} 
-          onLoginClick={() => setShowLoginModal(true)}
-          onLogout={handleLogout}
-        >
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/nutrition" element={<Nutrition />} />
-            <Route path="/activity" element={<Activity />} />
-            <Route path="/wellness" element={<Wellness />} />
-            <Route path="/body" element={<Body />} />
-            <Route path="/camera-test" element={<CameraTest />} />
-          </Routes>
-        </Layout>
-        
-        <LoginModal
-          isOpen={showLoginModal}
-          onClose={() => setShowLoginModal(false)}
-          onLoginSuccess={handleLoginSuccess}
-        />
-      </div>
+      <Suspense fallback={<LoadingFallback />}>
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+          <Layout
+            currentUser={currentUser}
+            onLoginClick={() => setShowLoginModal(true)}
+            onLogout={handleLogout}
+          >
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/nutrition" element={
+                  <ErrorBoundary>
+                    <Nutrition />
+                  </ErrorBoundary>
+                } />
+                <Route path="/activity" element={<Activity />} />
+                <Route path="/wellness" element={<Wellness />} />
+                <Route path="/body" element={<Body />} />
+                <Route path="/camera-test" element={<CameraTest />} />
+              </Routes>
+            </Suspense>
+          </Layout>
+
+          <LoginModal
+            isOpen={showLoginModal}
+            onClose={() => setShowLoginModal(false)}
+            onLoginSuccess={handleLoginSuccess}
+          />
+        </div>
+      </Suspense>
     </Router>
   )
 }
